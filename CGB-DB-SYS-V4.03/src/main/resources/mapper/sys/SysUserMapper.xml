@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cy.pj.sys.dao.SysUserDao">
+
+	<!-- 在映射文件中添加sql元素实现，SQL中的共性操作 -->
+	<sql id="queryWhereId">
+		from sys_users
+		<where>
+			<if test="username!=null and username!=''">
+				username like concat("%",#{username},"%")
+			</if>
+		</where>
+	</sql>
+	<!-- 在映射文件中添加id为getRowCount元素，按条件统计记录总数 -->
+	<select id="getRowCount" resultType="int">
+		select count(*)
+		<include refid="queryWhereId" />
+	</select>
+
+
+	<!-- 在映射文件中添加id为findPageObjects元素，实现分页查询 -->
+	<select id="findPageObjects" resultMap="sysUserDeptVo">
+		select *
+		<include refid="queryWhereId" />
+		order by createdTime desc
+		limit #{startIndex},#{pageSize}
+	</select>
+
+	<!-- 定义查询结果映射元素 -->
+	<resultMap type="com.cy.pj.sys.vo.SysUserDeptVo"
+		id="sysUserDeptVo">
+		<!-- 一般应用于many2one或one2one做关联查询 在当前应用是基于deptId查询部门信息并将其 存储到SysUserDeptVo对象的sysDept属性中。 -->
+		<association property="sysDept" column="deptId"
+			select="com.cy.pj.sys.dao.SysDeptDao.findById">
+		</association>
+	</resultMap>
+
+	<!-- 添加修改用户状态的SQL元素定义 -->
+	<update id="validById">
+		update sys_users
+		set valid=#{valid},
+		modifiedUser=#{modifiedUser},
+		modifiedTime=now()
+		where id=#{id}
+	</update>
+
+	<!-- 用于写入用户信息 -->
+	<insert id="insertObject"
+		parameterType="com.cy.pj.sys.entity.SysUser" useGeneratedKeys="true"
+		keyProperty="id">
+		insert into sys_users
+		(username,password,deptId,email,mobile,salt,valid,
+		createdTime,modifiedTime,createdUser,modifiedUser)
+		values
+		(#{username},#{password},#{deptId},#{email},#{mobile},#{salt},#{valid},
+		now(),now(),#{createdUser},#{modifiedUser})
+	</insert>
+
+	<!-- 添加对应的用户查询元素 -->
+	<select id="findObjectById" parameterType="int"
+		resultMap="sysUserDeptVo">
+		select *
+		from sys_users
+		where id=#{id}
+	</select>
+
+	<!-- 用于更新用户菜单信息 -->
+	<update id="updateObject"
+		parameterType="com.cy.pj.sys.entity.SysUser">
+		update sys_users
+		set
+		username = #{username},
+		mobile = #{mobile},
+		email = #{email},
+		deptId = #{deptId},
+		modifiedTime = now(),
+		modifiedUser = #{modifiedUser}
+		where id = #{id}
+	</update>
+
+	<!-- 定义映射元素:主要用于修改密码的映射元素 -->
+	<update id = "updatePassword">
+		update sys_users
+		set
+		password = #{password},
+		salt = #{salt},
+		modifiedTime = now()
+		where id = #{id}
+
+	</update>
+
+	<!-- 基于用户名获取用户对象的方法 -->
+	<select id="findUserByUserName" resultType="com.cy.pj.sys.entity.SysUser">
+		select *
+		from sys_users
+		where
+		username = #{username}
+	
+	</select>
+	
+	
+	
+</mapper>

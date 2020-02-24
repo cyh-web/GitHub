@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 1 在映射文件的设计目录中添加SysMenuMapper.xml映射文件 -->
+<mapper namespace="com.cy.pj.sys.dao.SysLogDao">
+	<!-- 添加SQL语句 -->
+	<delete id="deleteObjects">
+		delete from sys_logs
+		<choose>
+			<when test="ids!=null and ids.length > 0">
+				<where>
+					<foreach collection="ids" separator="or" item="id">
+						id=#{id}
+					</foreach>
+				</where>
+			</when>
+			<otherwise>
+				where 1==2
+			</otherwise>
+		</choose>
+	</delete>
+
+
+	<!-- 用于提取共性的操作 -->
+	<sql id="queryWhereId">
+		from sys_Logs
+		<where>
+			<if test="username!=null and username!=''">
+				username like concat("%",#{username},"%")
+			</if>
+		</where>
+	</sql>
+	<!-- 基于条件查询日志表中的记录总数 -->
+	<!-- resultType:返回值类型 -->
+	<select id="getRowCount" resultType="int">
+		select count(*)
+		<include refid="queryWhereId" />
+	</select>
+	<!-- 实现分页查询 -->
+	<!-- 基于条件查询当前页的记录信息 -->
+	<!-- limit (页码-1)*每页显示记录数，每页显示记录数 -->
+	<select id="findPageObjects"
+		resultType="com.cy.pj.sys.entity.SysLog">
+		select *
+		<include refid="queryWhereId" />
+		order by createdTime desc
+		limit #{startIndex},#{pageSize}
+	</select>
+</mapper>
